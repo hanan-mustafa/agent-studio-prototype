@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, BookOpen, X, Loader2 } from 'lucide-react'
+import { Plus, Trash2, BookOpen, X, Loader2, Pencil, Check } from 'lucide-react'
 import TopNav from '@/components/TopNav'
 import { QAPair } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
@@ -14,6 +14,10 @@ export default function ContentLibrary() {
   const [answer, setAnswer] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editQuestion, setEditQuestion] = useState('')
+  const [editAnswer, setEditAnswer] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   const fetchPairs = async () => {
     const res = await fetch('/api/qa')
@@ -52,6 +56,37 @@ export default function ContentLibrary() {
       body: JSON.stringify({ id }),
     })
     fetchPairs()
+  }
+
+  const startEdit = (pair: QAPair) => {
+    setEditingId(pair.id)
+    setEditQuestion(pair.question)
+    setEditAnswer(pair.answer)
+    setError('')
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditQuestion('')
+    setEditAnswer('')
+  }
+
+  const handleSaveEdit = async (id: string) => {
+    if (!editQuestion.trim() || !editAnswer.trim()) return
+    setSavingEdit(true)
+    const res = await fetch('/api/qa', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, question: editQuestion, answer: editAnswer }),
+    })
+    if (res.ok) {
+      cancelEdit()
+      fetchPairs()
+    } else {
+      const d = await res.json().catch(() => ({}))
+      setError(d.error || 'Failed to update pair')
+    }
+    setSavingEdit(false)
   }
 
   return (
@@ -160,23 +195,77 @@ export default function ContentLibrary() {
           <div className="space-y-3">
             {pairs.map((pair, i) => (
               <div key={pair.id} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm group">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
+                {editingId === pair.id ? (
+                  /* Edit mode */
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 mb-1">
                       <span className="text-xs font-mono text-gray-400">QA-{pairs.length - i}</span>
                       <span className="text-xs text-gray-300">·</span>
-                      <span className="text-xs text-gray-400">{formatDate(pair.createdAt)}</span>
+                      <span className="text-xs text-blue-500 font-medium">Editing</span>
                     </div>
-                    <p className="text-sm font-semibold text-gray-800 mb-1.5">{pair.question}</p>
-                    <p className="text-sm text-gray-600 leading-relaxed">{pair.answer}</p>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Question</label>
+                      <input
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100"
+                        value={editQuestion}
+                        onChange={e => setEditQuestion(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-1">Answer</label>
+                      <textarea
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-100 resize-none"
+                        rows={3}
+                        value={editAnswer}
+                        onChange={e => setEditAnswer(e.target.value)}
+                      />
+                    </div>
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+                    <div className="flex justify-end gap-2">
+                      <button onClick={cancelEdit} className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleSaveEdit(pair.id)}
+                        disabled={savingEdit || !editQuestion.trim() || !editAnswer.trim()}
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-sm font-medium text-white rounded-lg disabled:opacity-50"
+                        style={{ background: '#3D7D3F' }}
+                      >
+                        {savingEdit ? <Loader2 size={12} className="animate-spin" /> : <Check size={13} />}
+                        Save
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={() => handleDelete(pair.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-all flex-shrink-0"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                ) : (
+                  /* View mode */
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-xs font-mono text-gray-400">QA-{pairs.length - i}</span>
+                        <span className="text-xs text-gray-300">·</span>
+                        <span className="text-xs text-gray-400">{formatDate(pair.createdAt)}</span>
+                      </div>
+                      <p className="text-sm font-semibold text-gray-800 mb-1.5">{pair.question}</p>
+                      <p className="text-sm text-gray-600 leading-relaxed">{pair.answer}</p>
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => startEdit(pair)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-blue-50 text-gray-400 hover:text-blue-500 transition-all"
+                        title="Edit"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(pair.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-red-400 transition-all"
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>

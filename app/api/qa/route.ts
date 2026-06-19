@@ -30,6 +30,21 @@ export async function POST(req: Request) {
   return NextResponse.json(pair, { status: 201 })
 }
 
+export async function PUT(req: Request) {
+  const { id, question, answer } = await req.json()
+  if (!question?.trim() || !answer?.trim()) {
+    return NextResponse.json({ error: 'Question and answer are required' }, { status: 400 })
+  }
+
+  const pairs = await redis.lrange<QAPair>(KEYS.qaPairs, 0, -1)
+  const idx = pairs.findIndex(p => p.id === id)
+  if (idx === -1) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const updated: QAPair = { ...pairs[idx], question: question.trim(), answer: answer.trim() }
+  await redis.lset(KEYS.qaPairs, idx, updated)
+  return NextResponse.json(updated)
+}
+
 export async function DELETE(req: Request) {
   const { id } = await req.json()
   const pairs = await redis.lrange<QAPair>(KEYS.qaPairs, 0, -1)
