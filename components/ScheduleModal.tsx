@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, Play, CheckCircle, XCircle, Loader2, CalendarClock, Timer, Hourglass, CalendarDays } from 'lucide-react'
-import { ScheduleConfig, RunRecord, ScheduleMode } from '@/lib/types'
+import { ScheduleConfig, ScheduleMode } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { buildSchedule, detectTimezone, WEEKDAYS } from '@/lib/schedule'
 
@@ -13,7 +13,6 @@ interface ScheduleModalProps {
 
 export default function ScheduleModal({ onClose, onRunComplete }: ScheduleModalProps) {
   const [config, setConfig] = useState<ScheduleConfig | null>(null)
-  const [history, setHistory] = useState<RunRecord[]>([])
   const [mode, setMode] = useState<ScheduleMode>('minutes')
   const [everyMinutes, setEveryMinutes] = useState(15)
   const [everyHours, setEveryHours] = useState(6)
@@ -30,7 +29,6 @@ export default function ScheduleModal({ onClose, onRunComplete }: ScheduleModalP
     setTimezone(detectTimezone())
     fetch('/api/schedule').then(r => r.json()).then(d => {
       setConfig(d.config)
-      setHistory(d.history || [])
       if (d.config) {
         setMode(d.config.mode)
         if (d.config.everyMinutes) setEveryMinutes(d.config.everyMinutes)
@@ -86,8 +84,6 @@ export default function ScheduleModal({ onClose, onRunComplete }: ScheduleModalP
     const res = await fetch('/api/run', { method: 'POST' })
     if (res.ok) {
       setRunStatus('done')
-      const d = await fetch('/api/schedule').then(r => r.json())
-      setHistory(d.history || [])
       onRunComplete()
     } else {
       setRunStatus('error')
@@ -258,25 +254,6 @@ export default function ScheduleModal({ onClose, onRunComplete }: ScheduleModalP
             </div>
           )}
 
-          {/* Run history */}
-          {history.length > 0 && (
-            <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Recent runs</p>
-              <div className="space-y-1.5">
-                {history.slice(0, 5).map(run => (
-                  <div key={run.id} className="flex items-center justify-between text-xs py-2 px-3 rounded-lg bg-gray-50">
-                    <div className="flex items-center gap-2">
-                      {run.status === 'completed' ? <CheckCircle size={12} className="text-green-500" /> :
-                       run.status === 'failed' ? <XCircle size={12} className="text-red-500" /> :
-                       <Loader2 size={12} className="text-blue-500 animate-spin" />}
-                      <span className="text-gray-600">{run.summary || run.status}</span>
-                    </div>
-                    <span className="text-gray-400">{formatDate(run.startedAt)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
