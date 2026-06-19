@@ -5,11 +5,14 @@ import { useRouter } from 'next/navigation'
 import {
   MoreHorizontal, Zap, Pencil, Lock, ArrowUp, FileSearch,
   ShieldAlert, ListChecks, CalendarClock, Loader2, XCircle, MessageSquare, ChevronRight,
+  Hand, CalendarClock as CalendarClockIcon,
 } from 'lucide-react'
 import TopNav from '@/components/TopNav'
 import ScheduleModal from '@/components/ScheduleModal'
-import { RunRecord } from '@/lib/types'
+import { RunRecord, ScheduleConfig, RunTrigger } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
+
+type ActivityFilter = 'all' | 'manual' | 'scheduled'
 
 const SUGGESTED_PROMPTS = [
   {
@@ -36,6 +39,8 @@ export default function AgentDetailPage() {
   const router = useRouter()
   const [input, setInput] = useState('')
   const [history, setHistory] = useState<RunRecord[]>([])
+  const [scheduleCount, setScheduleCount] = useState(0)
+  const [filter, setFilter] = useState<ActivityFilter>('all')
   const [launching, setLaunching] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
@@ -44,15 +49,22 @@ export default function AgentDetailPage() {
   const fetchHistory = useCallback(async () => {
     const d = await fetch('/api/schedule').then(r => r.json())
     setHistory(d.history || [])
+    setScheduleCount((d.schedules || []).length)
   }, [])
 
   useEffect(() => { fetchHistory() }, [fetchHistory])
+
+  const filteredHistory = history.filter(r => filter === 'all' || r.trigger === filter)
 
   const launchAgent = async () => {
     if (launching) return
     setLaunching(true)
     try {
-      const res = await fetch('/api/run', { method: 'POST' })
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger: 'manual' }),
+      })
       const data = await res.json()
       if (res.ok && data.runId) {
         router.push(`/results/${data.runId}`)
@@ -115,8 +127,18 @@ export default function AgentDetailPage() {
               onClick={() => setShowSchedule(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              <CalendarClock size={14} className="text-gray-500" />
+              <span className="relative">
+                <CalendarClock size={14} className="text-gray-500" />
+                {scheduleCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-2 h-2 rounded-full ring-2 ring-white" style={{ background: '#3D7D3F' }} />
+                )}
+              </span>
               Scheduling
+              {scheduleCount > 0 && (
+                <span className="ml-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full" style={{ background: '#EBF5EC', color: '#3D7D3F' }}>
+                  {scheduleCount}
+                </span>
+              )}
             </button>
 
             <button
@@ -192,19 +214,41 @@ export default function AgentDetailPage() {
 
         {/* Activity tab */}
         <div>
-          <div className="flex items-center gap-6 border-b border-gray-100 mb-3">
+          <div className="flex items-center justify-between border-b border-gray-100 mb-3">
             <button className="text-sm font-medium text-gray-900 pb-2.5 border-b-2" style={{ borderColor: '#3D7D3F' }}>
               Activity
             </button>
+
+            {/* Quick filters */}
+            <div className="flex items-center gap-1 pb-2">
+              {(['all', 'manual', 'scheduled'] as ActivityFilter[]).map(f => {
+                const active = filter === f
+                const label = f === 'all' ? 'All' : f === 'manual' ? 'Manual' : 'Scheduled'
+                return (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${active ? 'text-white' : 'text-gray-500 hover:bg-gray-100'}`}
+                    style={active ? { background: '#3D7D3F' } : undefined}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
-          {history.length === 0 ? (
+          {filteredHistory.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-sm text-gray-400">No runs yet. Launch the agent to see activity here.</p>
+              <p className="text-sm text-gray-400">
+                {history.length === 0
+                  ? 'No runs yet. Launch the agent to see activity here.'
+                  : `No ${filter} runs yet.`}
+              </p>
             </div>
           ) : (
             <div>
-              {history.map(run => (
+              {filteredHistory.map(run => (
                 <button
                   key={run.id}
                   onClick={() => run.status === 'completed' && router.push(`/results/${run.id}`)}
@@ -217,11 +261,14 @@ export default function AgentDetailPage() {
                      <Loader2 size={14} className="text-blue-400 animate-spin" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-800 leading-tight truncate">
-                      {run.status === 'completed'
-                        ? (run.summary || 'Contradiction audit')
-                        : run.status === 'failed' ? 'Run failed' : 'Audit running…'}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-gray-800 leading-tight truncate">
+                        {run.status === 'completed'
+                          ? (run.summary || 'Contradiction audit')
+                          : run.status === 'failed' ? 'Run failed' : 'Audit running…'}
+                      </p>
+                      <TriggerBadge trigger={run.trigger} />
+                    </div>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {run.status === 'completed' ? 'Task completed' : run.status === 'failed' ? 'Task failed' : 'In progress'}
                     </p>
@@ -238,8 +285,29 @@ export default function AgentDetailPage() {
         <ScheduleModal
           onClose={() => { setShowSchedule(false); fetchHistory() }}
           onRunComplete={() => { fetchHistory(); setNotifTick(t => t + 1) }}
+          onSchedulesChange={(s: ScheduleConfig[]) => setScheduleCount(s.length)}
         />
       )}
     </div>
   )
+}
+
+function TriggerBadge({ trigger }: { trigger?: RunTrigger }) {
+  if (trigger === 'scheduled') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: '#EBF5EC', color: '#3D7D3F' }}>
+        <CalendarClockIcon size={10} />
+        Scheduled
+      </span>
+    )
+  }
+  if (trigger === 'manual') {
+    return (
+      <span className="flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0" style={{ background: '#EFF6FF', color: '#2563EB' }}>
+        <Hand size={10} />
+        Manual
+      </span>
+    )
+  }
+  return null
 }

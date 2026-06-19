@@ -7,7 +7,10 @@ export interface QAPair {
 
 export type ScheduleMode = 'minutes' | 'hours' | 'daily'
 
+export const MAX_SCHEDULES = 5
+
 export interface ScheduleConfig {
+  id: string
   mode: ScheduleMode
   everyMinutes?: number
   everyHours?: number
@@ -18,12 +21,16 @@ export interface ScheduleConfig {
   label: string // human-readable summary
   nextRun: string
   qstashScheduleId?: string
+  enabled: boolean
   createdAt: string
 }
+
+export type RunTrigger = 'manual' | 'scheduled'
 
 export interface RunRecord {
   id: string
   status: 'running' | 'completed' | 'failed'
+  trigger: RunTrigger
   startedAt: string
   completedAt?: string
   summary?: string

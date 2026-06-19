@@ -1,18 +1,27 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { redis, KEYS } from '@/lib/redis'
-import { QAPair, RunRecord, RunResult, Notification, Contradiction } from '@/lib/types'
+import { QAPair, RunRecord, RunResult, Notification, Contradiction, RunTrigger } from '@/lib/types'
 import { generateId } from '@/lib/utils'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-export async function POST() {
+export async function POST(req: Request) {
   const runId = generateId()
   const startedAt = new Date().toISOString()
+
+  // Manual calls (Run Now / Launch Agent) send an explicit { trigger: 'manual' }
+  // body. QStash-triggered runs have no such body, so they default to scheduled.
+  let trigger: RunTrigger = 'scheduled'
+  try {
+    const body = await req.json()
+    if (body?.trigger === 'manual') trigger = 'manual'
+  } catch {}
 
   const runRecord: RunRecord = {
     id: runId,
     status: 'running',
+    trigger,
     startedAt,
   }
   await redis.lpush(KEYS.runHistory, runRecord)

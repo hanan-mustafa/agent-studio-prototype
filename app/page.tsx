@@ -20,7 +20,11 @@ export default function AgentHome() {
     setLaunching(true)
     setLaunchStatus('running')
     try {
-      const res = await fetch('/api/run', { method: 'POST' })
+      const res = await fetch('/api/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ trigger: 'manual' }),
+      })
       if (res.ok) {
         setLaunchStatus('done')
         setNotifTick(t => t + 1)

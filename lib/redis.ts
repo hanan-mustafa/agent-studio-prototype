@@ -7,7 +7,7 @@ export const redis = new Redis({
 
 export const KEYS = {
   qaPairs: 'qa_pairs',
-  scheduleConfig: 'schedule_config',
+  schedules: 'schedules',
   runHistory: 'run_history',
   runResult: (id: string) => `run_result:${id}`,
   notifications: 'notifications',
