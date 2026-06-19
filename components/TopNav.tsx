@@ -58,7 +58,7 @@ export default function TopNav({ breadcrumb = 'Agent Studio', title = 'Agent Hom
   }
 
   return (
-    <header className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-3 z-40 relative">
+    <header className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-3 z-40 sticky top-0">
       {/* App Grid */}
       <div className="relative" ref={gridRef}>
         <button
