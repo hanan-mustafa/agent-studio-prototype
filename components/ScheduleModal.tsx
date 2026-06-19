@@ -139,30 +139,31 @@ export default function ScheduleModal({ onClose, onRunComplete }: ScheduleModalP
                         className="accent-green-600"
                       />
                       <Icon size={15} className="text-gray-400" />
-                      <span className="text-sm text-gray-700">{opt.label}</span>
 
-                      {/* Inline number input for minutes / hours */}
-                      {opt.value === 'minutes' && selected && (
-                        <div className="ml-auto flex items-center gap-1.5">
-                          <span className="text-xs text-gray-400">every</span>
+                      {opt.value === 'minutes' ? (
+                        <span className="text-sm text-gray-700 flex items-center gap-1.5">
+                          Every
                           <input
                             type="number" min={1} max={59} value={everyMinutes}
-                            onChange={e => setEveryMinutes(Math.max(1, Math.min(59, +e.target.value || 1)))}
-                            className="w-14 text-sm text-center border border-gray-200 rounded-md py-1 outline-none focus:border-green-400"
+                            onFocus={() => setMode('minutes')}
+                            onChange={e => { setMode('minutes'); setEveryMinutes(Math.max(1, Math.min(59, +e.target.value || 1))) }}
+                            className="w-14 text-sm text-center border border-gray-200 rounded-md py-1 outline-none focus:border-green-400 bg-white"
                           />
-                          <span className="text-xs text-gray-400">min</span>
-                        </div>
-                      )}
-                      {opt.value === 'hours' && selected && (
-                        <div className="ml-auto flex items-center gap-1.5">
-                          <span className="text-xs text-gray-400">every</span>
+                          minutes
+                        </span>
+                      ) : opt.value === 'hours' ? (
+                        <span className="text-sm text-gray-700 flex items-center gap-1.5">
+                          Every
                           <input
                             type="number" min={1} max={23} value={everyHours}
-                            onChange={e => setEveryHours(Math.max(1, Math.min(23, +e.target.value || 1)))}
-                            className="w-14 text-sm text-center border border-gray-200 rounded-md py-1 outline-none focus:border-green-400"
+                            onFocus={() => setMode('hours')}
+                            onChange={e => { setMode('hours'); setEveryHours(Math.max(1, Math.min(23, +e.target.value || 1))) }}
+                            className="w-14 text-sm text-center border border-gray-200 rounded-md py-1 outline-none focus:border-green-400 bg-white"
                           />
-                          <span className="text-xs text-gray-400">hr</span>
-                        </div>
+                          hours
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-700">Daily</span>
                       )}
                     </label>
 
