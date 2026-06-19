@@ -58,7 +58,7 @@ export default function TopNav({ breadcrumb = 'Agent Studio', title = 'Agent Hom
   }
 
   return (
-    <header className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-3 z-40 relative">
+    <header className="h-14 border-b border-gray-200 bg-white flex items-center px-4 gap-3 z-40 sticky top-0">
       {/* App Grid */}
       <div className="relative" ref={gridRef}>
         <button
@@ -72,14 +72,18 @@ export default function TopNav({ breadcrumb = 'Agent Studio', title = 'Agent Hom
 
       {/* Logo + Breadcrumb */}
       <div className="flex items-center gap-2">
-        <div className="w-7 h-7 flex items-center justify-center">
+        <button
+          onClick={() => router.push('/')}
+          className="w-7 h-7 flex items-center justify-center"
+          aria-label="Go to Agent Home"
+        >
           <svg viewBox="0 0 32 32" className="w-7 h-7">
             <path d="M8 4 C8 4 4 10 4 16 C4 22 8 28 16 28 C20 28 24 26 26 22 L20 18 C19 20 17.5 21 16 21 C12 21 9 18.5 9 16 C9 13.5 11 10 14 9 Z" fill="#3D7D3F"/>
             <path d="M16 4 C20 4 24 6 26 10 L20 14 C19 12 17.5 11 16 11 C14 11 12 12 11 14 L5 10 C7 6 11 4 16 4 Z" fill="#6BBF6E"/>
           </svg>
-        </div>
+        </button>
         <div className="flex items-center gap-1 text-sm">
-          <span className="text-gray-500">{breadcrumb}</span>
+          <button onClick={() => router.push('/')} className="text-gray-500 hover:text-gray-700">{breadcrumb}</button>
           <span className="text-gray-400">/</span>
           <span className="font-semibold text-gray-800">{title}</span>
         </div>

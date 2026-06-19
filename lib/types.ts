@@ -5,17 +5,32 @@ export interface QAPair {
   createdAt: string
 }
 
+export type ScheduleMode = 'minutes' | 'hours' | 'daily'
+
+export const MAX_SCHEDULES = 5
+
 export interface ScheduleConfig {
-  interval: string
-  cronExpression: string
+  id: string
+  mode: ScheduleMode
+  everyMinutes?: number
+  everyHours?: number
+  days?: number[] // 0=Sun .. 6=Sat, in the user's local timezone
+  time?: string // "HH:MM" in the user's local timezone
+  timezone?: string // IANA tz, e.g. "America/New_York"
+  cronExpression: string // UTC cron registered with QStash
+  label: string // human-readable summary
   nextRun: string
   qstashScheduleId?: string
+  enabled: boolean
   createdAt: string
 }
+
+export type RunTrigger = 'manual' | 'scheduled'
 
 export interface RunRecord {
   id: string
   status: 'running' | 'completed' | 'failed'
+  trigger: RunTrigger
   startedAt: string
   completedAt?: string
   summary?: string
@@ -47,10 +62,3 @@ export interface Notification {
   createdAt: string
 }
 
-export const SCHEDULE_OPTIONS = [
-  { label: 'Every 1 minute', value: 'every_1_min', cron: '* * * * *' },
-  { label: 'Every 5 minutes', value: 'every_5_min', cron: '*/5 * * * *' },
-  { label: 'Every 15 minutes', value: 'every_15_min', cron: '*/15 * * * *' },
-  { label: 'Every hour', value: 'every_hour', cron: '0 * * * *' },
-  { label: 'Daily at 9:00 AM', value: 'daily_9am', cron: '0 9 * * *' },
-]
