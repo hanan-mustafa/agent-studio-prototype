@@ -70,7 +70,7 @@ export default function ResultsPage() {
     <div className="h-screen flex flex-col bg-white overflow-hidden">
       {/* Top bar */}
       <div className="h-12 border-b border-gray-100 flex items-center px-4 gap-3 bg-white flex-shrink-0">
-        <button onClick={() => router.push('/')} className="p-1.5 rounded hover:bg-gray-100 text-gray-500">
+        <button onClick={() => router.push('/agent')} className="p-1.5 rounded hover:bg-gray-100 text-gray-500">
           <ArrowLeft size={16} />
         </button>
         <div className="w-5 h-5">
