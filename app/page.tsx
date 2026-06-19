@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MoreVertical, Rocket, CalendarClock, Copy, Trash2, LayoutGrid, List } from 'lucide-react'
+import { MoreVertical, Rocket, CalendarClock, Copy, Trash2, LayoutGrid, List, Loader2 } from 'lucide-react'
 import TopNav from '@/components/TopNav'
 import ScheduleModal from '@/components/ScheduleModal'
 
@@ -11,6 +11,30 @@ export default function AgentHome() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
   const [notifTick, setNotifTick] = useState(0)
+  const [launching, setLaunching] = useState(false)
+  const [launchStatus, setLaunchStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle')
+
+  const handleLaunch = async () => {
+    if (launching) return
+    setMenuOpen(false)
+    setLaunching(true)
+    setLaunchStatus('running')
+    try {
+      const res = await fetch('/api/run', { method: 'POST' })
+      if (res.ok) {
+        setLaunchStatus('done')
+        setNotifTick(t => t + 1)
+        setTimeout(() => setLaunchStatus('idle'), 4000)
+      } else {
+        setLaunchStatus('error')
+        setTimeout(() => setLaunchStatus('idle'), 4000)
+      }
+    } catch {
+      setLaunchStatus('error')
+      setTimeout(() => setLaunchStatus('idle'), 4000)
+    }
+    setLaunching(false)
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -82,8 +106,12 @@ export default function AgentHome() {
                 </button>
                 {menuOpen && (
                   <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-xl z-30 py-1">
-                    <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5">
-                      <Rocket size={14} className="text-gray-500" />
+                    <button
+                      onClick={handleLaunch}
+                      disabled={launching}
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5 disabled:opacity-50"
+                    >
+                      {launching ? <Loader2 size={14} className="text-gray-500 animate-spin" /> : <Rocket size={14} className="text-gray-500" />}
                       Launch Agent
                     </button>
                     <button
@@ -133,6 +161,29 @@ export default function AgentHome() {
 
       {menuOpen && (
         <div className="fixed inset-0 z-20" onClick={() => setMenuOpen(false)} />
+      )}
+
+      {launchStatus !== 'idle' && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          {launchStatus === 'running' && (
+            <div className="flex items-center gap-2 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 shadow-lg">
+              <Loader2 size={14} className="animate-spin" />
+              Agent is running…
+            </div>
+          )}
+          {launchStatus === 'done' && (
+            <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3 shadow-lg">
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 8l3 3 6-6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              Run completed — check your notifications for results.
+            </div>
+          )}
+          {launchStatus === 'error' && (
+            <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 shadow-lg">
+              <svg viewBox="0 0 16 16" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 4L4 12M4 4l8 8" strokeLinecap="round"/></svg>
+              Run failed. Please try again.
+            </div>
+          )}
+        </div>
       )}
     </div>
   )
