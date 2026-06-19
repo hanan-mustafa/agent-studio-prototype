@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   MoreHorizontal, Zap, Pencil, Lock, ArrowUp, FileSearch,
-  ShieldAlert, ListChecks, Sparkles, Loader2, CheckCircle, XCircle, MessageSquare, ChevronRight,
+  ShieldAlert, ListChecks, CalendarClock, Loader2, XCircle, MessageSquare, ChevronRight,
 } from 'lucide-react'
 import TopNav from '@/components/TopNav'
 import ScheduleModal from '@/components/ScheduleModal'
@@ -103,8 +103,8 @@ export default function AgentDetailPage() {
                       onClick={() => { setMenuOpen(false); setShowSchedule(true) }}
                       className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5"
                     >
-                      <Sparkles size={14} className="text-gray-500" />
-                      Automations
+                      <CalendarClock size={14} className="text-gray-500" />
+                      Scheduling
                     </button>
                   </div>
                 </>
@@ -115,8 +115,8 @@ export default function AgentDetailPage() {
               onClick={() => setShowSchedule(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
-              <Sparkles size={14} className="text-gray-500" />
-              Automations
+              <CalendarClock size={14} className="text-gray-500" />
+              Scheduling
             </button>
 
             <button
