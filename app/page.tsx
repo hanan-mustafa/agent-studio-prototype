@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MoreVertical, Rocket, CalendarClock, Copy, Trash2, LayoutGrid, List } from 'lucide-react'
 import TopNav from '@/components/TopNav'
 import ScheduleModal from '@/components/ScheduleModal'
 
 export default function AgentHome() {
+  const router = useRouter()
   const [menuOpen, setMenuOpen] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
   const [notifTick, setNotifTick] = useState(0)
@@ -55,7 +57,10 @@ export default function AgentHome() {
 
         {/* Agent card */}
         <div className="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm relative">
+          <div
+            onClick={() => router.push('/agent')}
+            className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm relative cursor-pointer hover:border-gray-300 hover:shadow-md transition-all"
+          >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: '#6B7280' }}>
@@ -70,13 +75,13 @@ export default function AgentHome() {
 
               <div className="relative">
                 <button
-                  onClick={() => setMenuOpen(v => !v)}
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(v => !v) }}
                   className="p-1 rounded hover:bg-gray-100 text-gray-400"
                 >
                   <MoreVertical size={16} />
                 </button>
                 {menuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-xl z-30 py-1">
+                  <div onClick={(e) => e.stopPropagation()} className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-xl z-30 py-1">
                     <button className="w-full text-left px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5">
                       <Rocket size={14} className="text-gray-500" />
                       Launch Agent
